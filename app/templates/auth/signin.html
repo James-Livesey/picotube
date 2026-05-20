@@ -5,12 +5,13 @@
 <form method="post">
     <div class="formRow">
         <label for="username">username</label>
-        <input id="username" type="text" required>
+        <input id="username" name="username" type="text" value="{{ username }}" required>
     </div>
     <div class="formRow">
         <label for="password">password</label>
-        <input id="password" type="password" required>
+        <input id="password" name="password" type="password" required>
     </div>
+    <p role="alert">{{ error }}</p>
     <div class="formButtons">
         <input type="submit" value="sign in">
     </div>

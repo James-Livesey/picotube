@@ -1,7 +1,8 @@
 import logging
-from flask import Flask, render_template
+from flask import Flask, request, render_template
 
-from auth import auth
+import db
+from auth import auth, get_current_user
 
 logging.basicConfig(level=logging.INFO)
 
@@ -14,8 +15,11 @@ app.register_blueprint(auth)
 def index():
     return render_template(
         "index.html",
+        user=get_current_user(request),
         section="home"
     )
 
 if __name__ == "__main__":
+    db.init()
+
     app.run(debug=True, host="0.0.0.0", port=8000)

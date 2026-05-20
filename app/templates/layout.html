@@ -19,6 +19,9 @@
             <form action="/search" method="get">
                 <input type="text" name="q" placeholder="cat videos" aria-label="Search query">
                 <input type="submit" value="search">
+                {% if user %}
+                <p class="greeting">hello, <strong>{{ user["username"] }}</strong>! <a href="/signout">sign out</a></p>
+                {% endif %}
             </form>
             {% endblock %}
         </header>
@@ -30,8 +33,12 @@
                 <li><a href="/" class="{{ 'active' if section == 'latest' else '' }}">latest</a></li>
                 <li><a href="/" class="{{ 'active' if section == 'random' else '' }}">random</a></li>
                 <span class="spacer"></span>
+                {% if user %}
+                <li><a href="/" class="{{ 'active' if section == 'user' else '' }}">profile</a></li>
+                {% else %}
                 <li><a href="/signin" class="{{ 'active' if section == 'signin' else '' }}">sign in</a></li>
                 <li><a href="/signup" class="{{ 'active' if section == 'signup' else '' }}">sign up</a></li>
+                {% endif %}
                 {% endblock %}
             </ul>
         </nav>
