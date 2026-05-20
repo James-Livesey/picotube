@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block title %}picotube{% endblock %}
+{% block main %}
+<h2>sign in</h2>
+<form method="post">
+    <div class="formRow">
+        <label for="username">username</label>
+        <input id="username" type="text" required>
+    </div>
+    <div class="formRow">
+        <label for="password">password</label>
+        <input id="password" type="password" required>
+    </div>
+    <div class="formButtons">
+        <input type="submit" value="sign in">
+    </div>
+    <p class="end">Don't have an account yet? <a href="/signup">Sign up</a> first</p>
+</form>
+{% endblock %}
