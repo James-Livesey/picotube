@@ -20,11 +20,6 @@
         <label for="passwordAgain">password again</label>
         <input id="passwordAgain" name="passwordAgain" type="password" required>
     </div>
-    <div class="formRow">
-        <label for="passwordYetAgain">one more time</label>
-        <input id="passwordYetAgain" name="passwordYetAgain" type="password" placeholder="&nbsp;">
-        <span class="sike">jk lol</span>
-    </div>
     <div class="formSpacer"></div>
     <div class="formRow">
         <input id="tosAgreed" name="tosAgreed" type="checkbox" required>
@@ -36,15 +31,4 @@
     </div>
     <p class="end">Already have an account? <a href="/signin">Sign in</a> instead</p>
 </form>
-<style>
-    .sike {
-        font-size: smaller;
-        opacity: 0;
-        transition: 1s opacity;
-    }
-
-    input:not(:placeholder-shown) + .sike {
-        opacity: 1;
-    }
-</style>
 {% endblock %}
