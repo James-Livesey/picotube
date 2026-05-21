@@ -3,13 +3,17 @@ from flask import Flask, request, render_template
 
 import db
 from auth import auth, get_current_user
+from upload import upload
 
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 logger = logging.getLogger()
 
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
+
 app.register_blueprint(auth)
+app.register_blueprint(upload)
 
 @app.route("/")
 def index():

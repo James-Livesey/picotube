@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block title %}upload :: picotube{% endblock %}
+{% block main %}
+<div class="center">
+    <h2>upload a video</h2>
+    <form method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept="{{ allowed_mime_types }}" required>
+        <input type="submit" value="submit">
+        <p role="alert">{{ error }}</p>
+    </form>
+    <p>Upload videos maximum 5 mins long. Videos will be transcoded to 240p30.</p>
+</div>
+{% endblock %}

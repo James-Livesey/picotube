@@ -4,14 +4,14 @@ import bcrypt
 import time
 import hashlib
 import jwt
-from flask import Blueprint, request, render_template, make_response, redirect
+from flask import current_app as app, Blueprint, request, render_template, make_response, redirect
 
 import common
+import config
 import db
 
 auth = Blueprint("auth", __name__)
 logger = logging.getLogger()
-jwt_secret = common.generate_key(64)
 
 class AuthError(Exception):
     pass
@@ -74,7 +74,7 @@ def get_current_user(request):
         return None
 
     try:
-        return jwt.decode(token, jwt_secret, algorithms=["HS256"])
+        return jwt.decode(token, config.jwt_secret, algorithms=["HS256"])
     except Exception as e:
         logger.warning("Unable to decode JWT for current user: %s", repr(e))
 
@@ -91,18 +91,23 @@ def generate_user_token(uid):
     return jwt.encode({
         "uid": uid,
         "username": user[0]
-    }, jwt_secret, algorithm="HS256")
+    }, config.jwt_secret, algorithm="HS256")
 
 @auth.route("/signin", methods=["GET", "POST"])
 def sign_in():
+    redirect_url = request.args.get("go") or "/"
+
+    if not redirect_url.startswith("/"):
+        redirect_url = "/"
+
     if get_current_user(request):
-        return redirect("/", code=302)
+        return redirect(redirect_url, code=302)
 
     if request.method == "POST":
         try:
             uid = authenticate_user(request.form["username"], request.form["password"])
             token = generate_user_token(uid)
-            response = make_response(redirect("/", code=302))
+            response = make_response(redirect(redirect_url, code=302))
 
             response.set_cookie("picotube_token", token)
 
