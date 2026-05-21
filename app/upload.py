@@ -29,8 +29,6 @@ def upload_area():
 
             file = request.files["file"]
 
-            print(file)
-
             if file.content_type not in ALLOWED_MIME_TYPES:
                 raise UploadError("Sorry, but that file isn't a supported video format.")
             
