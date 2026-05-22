@@ -13,3 +13,21 @@ CREATE TABLE IF NOT EXISTS users (
     network_id varchar(64),
     favourite_colour integer
 );
+
+CREATE TABLE IF NOT EXISTS videos (
+    video_id varchar(16) PRIMARY KEY,
+    author varchar(16) REFERENCES users(uid) NOT NULL,
+    title varchar(100),
+    description varchar(2000),
+    created_time integer NOT NULL,
+    primary_variant varchar(16) REFERENCES video_variants(variant_id) NOT NULL,
+    published boolean DEFAULT FALSE,
+    removed boolean DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS video_variants (
+    variant_id varchar(16) PRIMARY KEY,
+    type varchar(16) DEFAULT 'original',
+    display_name varchar(50),
+    transcoder_status integer DEFAULT 0
+);

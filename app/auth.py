@@ -18,11 +18,15 @@ class AuthError(Exception):
 
 def authenticate_user(username, password):
     try:
+        db.lock.acquire(True)
+
         user = db.cursor.execute("SELECT uid, password FROM users WHERE username = ?", [username.lower()]).fetchone()
     except Exception as e:
         logger.error("Cannot authenticate user: %s", repr(e))
 
         raise AuthError("An unknown error occurred when trying to authenticate. Please try again later.")
+    finally:
+        db.lock.release()
 
     if user is None or not bcrypt.checkpw(password.encode(), user[1]):
         raise AuthError("Incorrect username or password. Try typing them in again, but be super careful this time.")
@@ -41,10 +45,12 @@ def create_user(username, email, password, ip_address):
     if len(password) < 8:
         raise AuthError("Your password sucks. Please make it at least 8 characters long.")
 
-    if db.cursor.execute("SELECT * FROM users WHERE username = ?", [username.lower()]).fetchone() is not None:
-        raise AuthError("Someone else has that username already. Please try coming up with a different username instead.")
-
     try:
+        db.lock.acquire(True)
+
+        if db.cursor.execute("SELECT * FROM users WHERE username = ?", [username.lower()]).fetchone() is not None:
+            raise AuthError("Someone else has that username already. Please try coming up with a different username instead.")
+
         db.cursor.execute(
             "INSERT INTO users (uid, username, display_username, email, password, created_time, network_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
             [
@@ -65,6 +71,8 @@ def create_user(username, email, password, ip_address):
         logger.error("Cannot create user: %s", repr(e))
 
         raise AuthError("An unknown error occurred when trying to create this user. Please try again later.")
+    finally:
+        db.lock.release()
 
 def get_current_user(request):
     token = request.cookies.get("picotube_token")
@@ -80,7 +88,12 @@ def get_current_user(request):
         return None
 
 def generate_user_token(uid):
-    user = db.cursor.execute("SELECT username FROM users WHERE uid = ?", [uid]).fetchone()
+    try:
+        db.lock.acquire(True)
+
+        user = db.cursor.execute("SELECT username FROM users WHERE uid = ?", [uid]).fetchone()
+    finally:
+        db.lock.release()
 
     if user is None:
         logging.error("Unknown user ID when generating user token: %s", uid)
