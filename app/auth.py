@@ -24,7 +24,6 @@ def authenticate_user(username, password):
 
         raise AuthError("An unknown error occurred when trying to authenticate. Please try again later.")
 
-    print(user)
     if user is None or not bcrypt.checkpw(password.encode(), user[1]):
         raise AuthError("Incorrect username or password. Try typing them in again, but be super careful this time.")
 
