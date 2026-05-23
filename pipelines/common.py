@@ -3,7 +3,7 @@ import json
 from app import config
 
 def fetch_private_api(endpoint, method="GET", body=None):
-    request = urllib.request.Request("http://0.0.0.0:8000/" + endpoint, method=method)
+    request = urllib.request.Request("http://0.0.0.0:8000" + endpoint, method=method)
 
     request.add_header("Authorization", "Bearer " + config.private_api_secret)
 

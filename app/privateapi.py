@@ -20,10 +20,11 @@ def transcoder_jobs():
 
         variants = []
 
-        for row in db.cursor.execute("SELECT variant_id, transcoder_status FROM video_variants WHERE transcoder_status = 0 LIMIT 10").fetchall():
+        for row in db.cursor.execute("SELECT variant_id, video, transcoder_status FROM video_variants WHERE transcoder_status = 0 LIMIT 10").fetchall():
             variants.append({
                 "variant_id": row[0],
-                "transcoder_status": row[1]
+                "video_id": row[1],
+                "transcoder_status": row[2]
             })
 
         return jsonify({

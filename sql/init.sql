@@ -20,14 +20,21 @@ CREATE TABLE IF NOT EXISTS videos (
     title varchar(100),
     description varchar(2000),
     created_time integer NOT NULL,
-    primary_variant varchar(16) REFERENCES video_variants(variant_id) NOT NULL,
     published boolean DEFAULT FALSE,
     removed boolean DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS video_variants (
     variant_id varchar(16) PRIMARY KEY,
+    video varchar(16) REFERENCES videos(video_id) NOT NULL,
     type varchar(16) DEFAULT 'original',
     display_name varchar(50),
     transcoder_status integer DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS video_subtitles (
+    subtitles_id varchar(16) PRIMARY KEY,
+    video varchar(16) REFERENCES videos(video_id) NOT NULL,
+    type varchar(16) DEFAULT 'original',
+    display_name varchar(50)
 );

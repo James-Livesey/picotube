@@ -16,13 +16,13 @@ ALLOWED_MIME_TYPES = ["video/mp4", "video/x-matroska", "video/webm", "video/x-ms
 class UploadError(Exception):
     pass
 
-def create_variant():
+def create_variant(video):
     variant_id = common.generate_key()
 
     try:
         db.lock.acquire(True)
 
-        db.cursor.execute("INSERT INTO video_variants (variant_id) VALUES (?)", [variant_id])
+        db.cursor.execute("INSERT INTO video_variants (variant_id, video) VALUES (?, ?)", [variant_id, video])
 
         db.connection.commit()
     except Exception as e:
@@ -34,21 +34,38 @@ def create_variant():
 
     return variant_id
 
-def create_video(author, primary_variant):
+def create_subtitles(video, type, subtitles):
+    subtitles_id = common.generate_key()
+
+    try:
+        subtitles_dir = pathlib.Path("videos") / video / "subtitles"
+
+        os.makedirs(subtitles_dir, exist_ok=True)
+
+        file = open(subtitles_dir / (subtitles_id + ".vtt"), "w")
+
+        file.write(subtitles)
+        file.close()
+
+        db.lock.acquire(True)
+
+        db.cursor.execute("INSERT INTO video_subtitles (subtitles_id, video, type) VALUES (?, ?, ?)", [subtitles_id, video, type])
+
+        db.connection.commit()
+    except Exception as e:
+        logger.error("Cannot create video subtitles: %s", repr(e))
+
+        raise UploadError("An unknown error occurred when trying to create your video. Please try again later.")
+    finally:
+        db.lock.release()
+
+def create_video(author):
     video_id = common.generate_key()
 
     try:
         db.lock.acquire(True)
 
-        db.cursor.execute(
-            "INSERT INTO videos (video_id, author, created_time, primary_variant) VALUES (?, ?, ?, ?)",
-            [
-                video_id,
-                author,
-                time.time(),
-                primary_variant
-            ]
-        )
+        db.cursor.execute("INSERT INTO videos (video_id, author, created_time) VALUES (?, ?, ?)", [video_id, author, time.time()])
 
         db.connection.commit()
     except Exception as e:
@@ -73,15 +90,18 @@ def upload_area():
                 raise UploadError("Please actually upload something.")
 
             file = request.files["file"]
+            subtitles = request.form.get("subtitles") or ""
 
             if file.content_type not in ALLOWED_MIME_TYPES:
                 raise UploadError("Sorry, but that file isn't a supported video format.")
-            
+
             os.makedirs("uploads", exist_ok=True)
 
-            variant_id = create_variant()
+            video_id = create_video(user["uid"])
+            variant_id = create_variant(video_id)
 
-            create_video(user["uid"], variant_id)
+            if subtitles != "":
+                create_subtitles(video_id, "generated", subtitles)
 
             file.save(pathlib.Path("uploads") / (variant_id + ".upload"))
 

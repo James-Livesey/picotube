@@ -16,8 +16,9 @@ def update_transcoder_status(variant_id, status):
     )
 
 def transcode(upload):
+    video_id = upload["video_id"]
     variant_id = upload["variant_id"]
-    video_dir = pathlib.Path("videos") / variant_id
+    video_dir = pathlib.Path("videos") / video_id / "variants" / variant_id
 
     update_transcoder_status(variant_id, 1)
 
@@ -44,9 +45,9 @@ def transcode(upload):
         update_transcoder_status(variant_id, -1)
 
 def run():
-    data = common.fetch_private_api("/privateapi/uploadqueue")
+    logger.info("Checking transcoder queue...")
 
-    logger.info(data)
+    data = common.fetch_private_api("/privateapi/uploadqueue")
 
     if len(data["variants"]) > 0:
         transcode(data["variants"][0])

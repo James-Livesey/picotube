@@ -5,6 +5,7 @@
     <h2>upload a video</h2>
     <form id="form" method="post" enctype="multipart/form-data">
         <input type="file" id="file" name="file" accept="{{ allowed_mime_types }}" required>
+        <input type="hidden" id="subtitles" name="subtitles">
         <input type="submit" id="submit" value="submit">
         <p role="alert">{{ error }}</p>
     </form>
@@ -183,6 +184,8 @@
 
         event.preventDefault();
 
+        var filename = fileInput.files[0].name;
+
         submitButton.disabled = true;
         statusMessage.textContent = "Preprocessing video...";
         errorDetailMessage.textContent = "";
@@ -230,20 +233,23 @@
             console.log(videoBuffer, transcription);
 
             if (videoBuffer) {
-                // var formData = new FormData();
+                var formData = new FormData();
 
-                // formData.append("file", new Blob([videoBuffer], {type: "video/mp4"}));
+                formData.append("file", new Blob([videoBuffer], {type: "video/mp4"}), filename);
+                formData.append("subtitles", transcription ?? "");
 
-                // var request = new XMLHttpRequest();
+                var request = new XMLHttpRequest();
 
-                // request.addEventListener("load", function(response) {
-                //     window.location.href = request.responseURL;
-                // });
+                request.addEventListener("load", function(response) {
+                    window.location.href = request.responseURL;
+                });
 
-                // request.open("POST", "/upload");
-                // request.send(formData);
+                request.open("POST", "/upload");
+                request.send(formData);
             } else {
-                // form.submit();
+                document.getElementById("#subtitles").value = transcription ?? "";
+
+                form.submit();
             }
         });
 
