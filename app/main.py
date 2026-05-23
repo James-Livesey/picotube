@@ -17,6 +17,13 @@ app.register_blueprint(privateapi)
 app.register_blueprint(auth)
 app.register_blueprint(upload)
 
+@app.after_request
+def after_request(response):
+    response.headers.add("Cross-Origin-Embedder-Policy", "require-corp")
+    response.headers.add("Cross-Origin-Opener-Policy", "same-origin")
+
+    return response
+
 @app.route("/")
 def index():
     return render_template(

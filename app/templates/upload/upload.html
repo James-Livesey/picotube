@@ -13,7 +13,9 @@
         <div id="video"></div>
         <div>
             <p id="status" role="alert"></p>
-            <p id="progress"></p>
+            <p id="errorDetail"></p>
+            <p id="transcodingProgress"></p>
+            <p id="transcriptionProgress"></p>
         </div>
     </div>
 </div>
@@ -41,20 +43,43 @@
 </style>
 {% endblock %}
 {% block scripts %}
+<script type="importmap">
+    {
+        "imports": {
+            "@transcribe/shout": "{{ url_for('static', filename='lib/transcribe.js/src/shout/shout.wasm.js') }}",
+            "@transcribe/transcriber": "{{ url_for('static', filename='lib/transcribe.js/src/index.js') }}"
+        }
+    }
+</script>
 <script>
     var form = document.getElementById("form");
     var fileInput = document.getElementById("file");
     var submitButton = document.getElementById("submit");
     var statusMessage = document.getElementById("status");
-    var progressMessage = document.getElementById("progress");
+    var errorDetailMessage = document.getElementById("errorDetail");
+    var transcodingProgressMessage = document.getElementById("transcodingProgress");
+    var transcriptionProgressMessage = document.getElementById("transcriptionProgress");
     var video = null;
+    var errorShown = false;
 
-    async function loadTranscoderLibrary() {
-        return await import("{{ url_for('static', filename='lib/mediabunny.min.mjs') }}");
+    function showError(message, detail) {
+        if (errorShown) {
+            return;
+        }
+
+        statusMessage.textContent = message;
+        errorDetailMessage.textContent = detail;
+        transcodingProgressMessage.hidden = true;
+        transcriptionProgressMessage.hidden = true;
+
+        submit.disabled = false;
     }
 
-    async function transcodeVideo(transcoderLibrary) {
-        var {Input, Output, Conversion, ALL_FORMATS, UrlSource, Mp4OutputFormat, BufferTarget} = transcoderLibrary;
+    async function transcodeVideo() {
+        transcodingProgressMessage.textContent = "Loading local transcoding tool...";
+        transcodingProgressMessage.hidden = false;
+
+        var {Input, Output, Conversion, ALL_FORMATS, UrlSource, Mp4OutputFormat, BufferTarget} = await import("{{ url_for('static', filename='lib/mediabunny.min.mjs') }}");
 
         try {
             var input = new Input({
@@ -77,9 +102,7 @@
             });
 
             if (!conversion.isValid) {
-                statusMessage.textContent = "Couldn't convert video.";
-                progressMessage.textContent = "Please try another file.";
-                submit.disabled = false;
+                showError("Couldn't convert video.", "Please try another file.");
 
                 throw new Error("Invalid conversion");
             }
@@ -87,7 +110,7 @@
             var lastTimeUpdate = Date.now();
 
             conversion.onProgress = function(progress) {
-                progressMessage.textContent = `Transcoding... (${Math.round(progress * 100)}%)`;
+                transcodingProgressMessage.textContent = `Transcoding... (${Math.round(progress * 100)}%)`;
 
                 if (Date.now() - lastTimeUpdate > 100) {
                     video.currentTime = progress * video.duration;
@@ -100,16 +123,57 @@
 
             await conversion.execute();
 
+            transcodingProgressMessage.hidden = true;
+
             return output.target.buffer;
         } catch (e) {
-            statusMessage.textContent = "Sorry, but local preprocessing failed.";
-            progressMessage.textContent = "Your web browser may be out of date. Please either update your web browser, or upload a video that is maximum 480p to bypass local preprocessing.";
-            submit.disabled = false;
-
-            console.log(status, document.getElementById("status"), statusMessage.textContent);
+            showError("Sorry, but local preprocessing failed.", "Your web browser may be out of date. Please either update your web browser, or upload a video that is maximum 480p to bypass local preprocessing.");
 
             throw e;
         }
+    }
+
+    function transcriptionResultToWebvtt(result) {
+        return `WEBVTT\n\n` + result.transcription.map(function(part, i) {
+            var fromTime = part.timestamps.from.replace(",", ".");
+            var toTime = part.timestamps.to.replace(",", ".");
+
+            return [
+                String(i + 1),
+                `${fromTime} --> ${toTime}`,
+                part.text.trim()
+            ].join("\n");
+        }).join("\n\n");
+    }
+
+    async function transcribeVideo() {
+        transcriptionProgressMessage.textContent = "Loading local subtitle generator...";
+        transcriptionProgressMessage.hidden = false;
+
+        var createModule = (await import("@transcribe/shout")).default;
+        var {FileTranscriber} = await import("@transcribe/transcriber");
+
+        var transcriber = new FileTranscriber({
+            createModule,
+            model: "{{ url_for('static', filename='lib/ggml-tiny.en-q8_0.bin') }}",
+            onReady: () => transcriptionProgressMessage.textContent = "Starting local subtitle generator...",
+            onProgress: (progress) => transcriptionProgressMessage.textContent = `Generating subtitles... (${progress}%)`,
+            print: (message) => console.log(message),
+            printErr: (message) => console.error(message)
+        });
+
+        await transcriber.init();
+
+        var result = await transcriber.transcribe(video.src, {
+            lang: "en",
+            threads: navigator.hardwareConcurrency - 2,
+            translate: false,
+            token_timestamps: true
+        });
+
+        transcriptionProgressMessage.hidden = true;
+
+        return transcriptionResultToWebvtt(result);
     }
 
     submitButton.addEventListener("click", function(event) {
@@ -121,7 +185,13 @@
 
         submitButton.disabled = true;
         statusMessage.textContent = "Preprocessing video...";
-        progressMessage.textContent = "";
+        errorDetailMessage.textContent = "";
+        transcodingProgressMessage.hidden = true;
+        transcriptionProgressMessage.hidden = true;
+
+        errorShown = false;
+
+        video?.remove();
 
         video = document.createElement("video");
 
@@ -131,43 +201,54 @@
 
         video.addEventListener("loadedmetadata", async function() {
             if (video.duration > 5 * 60) {
-                statusMessage.textContent = "Sorry, your video is too long.";
-                progressMessage.textContent = "Please make it shorter and try again.";
-                submit.disabled = false;
+                showError("Sorry, your video is too long.", "Please make it shorter and try again.");
 
                 throw new Error("Video too long");
             }
 
+            var transcodingPromise = null;
+            var transcriptionPromise = transcribeVideo();
+
+            transcodingPromise?.catch(function(error) {
+                console.warn("Transcription failed:", error);
+
+                transcriptionProgressMessage.textContent = "";
+
+                return Promise.resolve(null);
+            });
+
             if (video.videoWidth > 640 || video.videoHeight > 480) {
-                progressMessage.textContent = "Loading local transcoding tool...";
+                transcodingPromise = transcodeVideo();
+            }
 
-                var transcoderLibrary = await loadTranscoderLibrary();
-                var videoBuffer = await transcodeVideo(transcoderLibrary);
+            var [videoBuffer, transcription] = await Promise.all([transcodingPromise, transcriptionPromise]);
 
-                statusMessage.textContent = "Uploading video...";
-                progressMessage.textContent = "";
+            statusMessage.textContent = "Uploading video...";
+            transcodingProgressMessage.hidden = true;
+            transcriptionProgressMessage.hidden = true;
 
-                var formData = new FormData();
+            console.log(videoBuffer, transcription);
 
-                formData.append("file", new Blob([videoBuffer], {type: "video/mp4"}));
+            if (videoBuffer) {
+                // var formData = new FormData();
 
-                var request = new XMLHttpRequest();
+                // formData.append("file", new Blob([videoBuffer], {type: "video/mp4"}));
 
-                request.addEventListener("load", function(response) {
-                    window.location.href = request.responseURL;
-                });
+                // var request = new XMLHttpRequest();
 
-                request.open("POST", "/upload");
-                request.send(formData);
+                // request.addEventListener("load", function(response) {
+                //     window.location.href = request.responseURL;
+                // });
+
+                // request.open("POST", "/upload");
+                // request.send(formData);
             } else {
-                form.submit();
+                // form.submit();
             }
         });
 
         video.addEventListener("error", function() {
-            statusMessage.textContent = "Failed to load video.";
-            progressMessage.textContent = "Please check the video file and try again.";
-            submit.disabled = false;
+            showError("Failed to load video.", "Please check the video file and try again.");
         });
 
         video.src = URL.createObjectURL(fileInput.files[0]);
