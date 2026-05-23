@@ -240,8 +240,14 @@
 
                 var request = new XMLHttpRequest();
 
-                request.addEventListener("load", function(response) {
-                    window.location.href = request.responseURL;
+                request.addEventListener("load", function() {
+                    if (request.status == 200 || request.status == 302) {
+                        window.location.href = request.responseURL;
+                    } else {
+                        console.error("Upload response status:", request.status);
+
+                        showError("Failed to upload video.", "Please try again.");
+                    }
                 });
 
                 request.open("POST", "/upload");

@@ -20,8 +20,12 @@ CREATE TABLE IF NOT EXISTS videos (
     title varchar(100),
     description varchar(2000),
     created_time integer NOT NULL,
+    has_burnt_in_subtitles boolean DEFAULT FALSE,
+    has_flashing_images boolean DEFAULT FALSE,
+    allows_comments DEFAULT FALSE,
     published boolean DEFAULT FALSE,
-    removed boolean DEFAULT FALSE
+    removed boolean DEFAULT FALSE,
+    processing_done boolean DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS video_variants (
@@ -37,4 +41,15 @@ CREATE TABLE IF NOT EXISTS video_subtitles (
     video varchar(16) REFERENCES videos(video_id) NOT NULL,
     type varchar(16) DEFAULT 'original',
     display_name varchar(50)
+);
+
+CREATE TABLE IF NOT EXISTS video_tags (
+    video varchar(16) REFERENCES videos(video_id),
+    tag varchar(20) REFERENCES tags(tag),
+    PRIMARY KEY (video, tag)
+);
+
+CREATE TABLE IF NOT EXISTS tags (
+    tag varchar(20) PRIMARY KEY,
+    display_name varchar(20)
 );

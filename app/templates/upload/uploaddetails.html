@@ -1,0 +1,125 @@
+{% extends "layout.html" %}
+{% block title %}upload :: picotube{% endblock %}
+{% block main %}
+<h2>video details</h2>
+<form method="post" enctype="multipart/form-data">
+    <section>
+        <div class="formRow">
+            <label for="title">title</label>
+            <input id="title" class="long" name="title" type="text" maxlength="100" value="{{ title }}" required>
+        </div>
+        <div class="formRow">
+            <label for="description">description</label>
+            <textarea id="description" name="description" maxlength="2000">{{ description }}</textarea>
+        </div>
+    </section>
+    <section>
+        <div class="formRow">
+            <p>Add up to 10 tags, separated using commas, to make this video appear next to videos that feature similar topics.</p>
+            <label for="tags">tags</label>
+            <input id="tags" class="long" name="tags" type="text" placeholder="for example: rainbow, cat, funny" maxlength="218" value="{{ tags }}">
+        </div>
+    </section>
+    <section id="subtitlesSection">
+        <fieldset>
+            <legend>subtitles</legend>
+            <div>
+                <div class="formRow">
+                    <input id="useGeneratedSubtitles" name="subtitles" type="radio" value="useGenerated" required {% if subtitles == 'useGenerated' %}checked{% endif %}>
+                    <label for="useGeneratedSubtitles">use auto-generated subtitles (if available)</label>
+                </div>
+                <div class="formRow">
+                    <input id="uploadSubtitles" name="subtitles" type="radio" value="upload" required {% if subtitles == 'upload' %}checked{% endif %}>
+                    <label for="uploadSubtitles">upload my own subtitles file (WebVTT)</label>
+                </div>
+                <div class="formRow">
+                    <input id="subtitlesBurntIn" name="subtitles" type="radio" value="burntIn" required {% if subtitles == 'burntIn' %}checked{% endif %}>
+                    <label for="subtitlesBurntIn">subtitles are already burnt into the video</label>
+                </div>
+            </div>
+        </fieldset>
+    </section>
+    <section id="subtitlesFileSection" class="highlight">
+        <p>If you are providing your own subtitles, then please upload your subtitles file here.</p>
+        <div class="formRow">
+            <label for="subtitlesFile">subtitles file</label>
+            <input id="subtitlesFile" name="subtitlesFile" type="file" accept="text/vtt">
+        </div>
+    </section>
+    <section id="flashingImagesSection" class="highlight">
+        <p>Please let us know if this video has flashing images which have the potential to trigger seizures for viewers with photosensitive epilepsy.</p>
+        <fieldset>
+            <legend>flashing images</legend>
+            <div>
+                <div class="formRow">
+                    <input id="hasFlashingImages" name="flashingImages" type="radio" value="yes" required {% if flashing_images == 'yes' %}checked{% endif %}>
+                    <label for="hasFlashingImages">this video has flashing images (display a warning)</label>
+                </div>
+                <div class="formRow">
+                    <input id="hasNoFlashingImages" name="flashingImages" type="radio" value="no" required {% if flashing_images == 'no' %}checked{% endif %}>
+                    <label for="hasNoFlashingImages">this video does not have flashing images</label>
+                </div>
+            </div>
+        </fieldset>
+    </section>
+    <section>
+        <fieldset>
+            <legend>comments</legend>
+            <div>
+                <div class="formRow">
+                    <input id="allowComments" name="comments" type="radio" value="yes" required {% if comments == 'yes' %}checked{% endif %}>
+                    <label for="allowComments">allow comments from other users to be posted on my video</label>
+                </div>
+                <div class="formRow">
+                    <input id="dontAllowComments" name="comments" type="radio" value="no" required {% if comments == 'no' %}checked{% endif %}>
+                    <label for="dontAllowComments">don't allow comments</label>
+                </div>
+            </div>
+        </fieldset>
+    </section>
+    <section>
+        <fieldset>
+            <legend>publication</legend>
+            <div>
+                <div class="formRow">
+                    <input id="publishNow" name="publish" type="radio" value="now" required {% if publish == 'now' %}checked{% endif %}>
+                    <label for="hasFlashingImages">publish this video now</label>
+                </div>
+                <div class="formRow">
+                    <input id="hasNoFlashingImages" name="publish" type="radio" value="later" required {% if publish == 'later' %}checked{% endif %}>
+                    <label for="hasNoFlashingImages">don't publish this video yet (keep it private for now)</label>
+                </div>
+            </div>
+        </fieldset>
+    </section>
+    <p role="alert">{{ error }}</p>
+    <div class="formButtons">
+        <input type="submit" value="submit">
+    </div>
+</form>
+<style>
+    #subtitlesFileSection {
+        display: none;
+        transition: 2s background-color;
+    }
+
+    #subtitlesSection:has(#uploadSubtitles:checked) ~ #subtitlesFileSection {
+        display: block;
+    }
+
+    #flashingImagesSection {
+        transition: 2s background-color;
+    }
+
+    #flashingImagesSection:has(input:checked) {
+        background-color: transparent;
+    }
+</style>
+{% endblock %}
+{% block scripts %}
+<script>
+    document.getElementById("subtitlesFile").addEventListener("change", function() {
+        document.getElementById("subtitlesFileSection").classList.remove("highlight");
+    });
+</script>
+{% endblock %}
