@@ -93,7 +93,7 @@ def upload_area():
                 section="upload",
                 allowed_mime_types=", ".join(ALLOWED_MIME_TYPES),
                 error=str(e)
-            )
+            ), 400
 
     return render_template(
         "upload/upload.html",

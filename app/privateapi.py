@@ -51,7 +51,7 @@ def transcoder_variant(variant_id):
 
         db.connection.commit()
 
-        return ["", 204]
+        return jsonify({}), 200
     except Exception as e:
         logger.error("Cannot update upload in queue: %s", e)
 

@@ -3,11 +3,174 @@
 {% block main %}
 <div class="center">
     <h2>upload a video</h2>
-    <form method="post" enctype="multipart/form-data">
-        <input type="file" name="file" accept="{{ allowed_mime_types }}" required>
-        <input type="submit" value="submit">
+    <form id="form" method="post" enctype="multipart/form-data">
+        <input type="file" id="file" name="file" accept="{{ allowed_mime_types }}" required>
+        <input type="submit" id="submit" value="submit">
         <p role="alert">{{ error }}</p>
     </form>
     <p>Upload videos maximum 5 mins long. Videos will be transcoded to 240p30.</p>
+    <div id="details">
+        <div id="video"></div>
+        <div>
+            <p id="status" role="alert"></p>
+            <p id="progress"></p>
+        </div>
+    </div>
 </div>
+<style>
+    #details {
+        display: flex;
+        margin: 2em;
+        gap: 2em;
+        text-align: start;
+    }
+
+    #details > div {
+        flex-grow: 1;
+        flex-basis: 0;
+    }
+
+    #video video {
+        width: 100%;
+    }
+
+    #status {
+        margin: 0;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+{% block scripts %}
+<script>
+    var form = document.getElementById("form");
+    var fileInput = document.getElementById("file");
+    var submitButton = document.getElementById("submit");
+    var statusMessage = document.getElementById("status");
+    var progressMessage = document.getElementById("progress");
+    var video = null;
+
+    async function loadTranscoderLibrary() {
+        return await import("{{ url_for('static', filename='lib/mediabunny.min.mjs') }}");
+    }
+
+    async function transcodeVideo(transcoderLibrary) {
+        var {Input, Output, Conversion, ALL_FORMATS, UrlSource, Mp4OutputFormat, BufferTarget} = transcoderLibrary;
+
+        try {
+            var input = new Input({
+                formats: ALL_FORMATS,
+                source: new UrlSource(video.src)
+            });
+
+            var output = new Output({
+                format: new Mp4OutputFormat(),
+                target: new BufferTarget()
+            });
+
+            var conversion = await Conversion.init({
+                input,
+                output,
+                video: {
+                    height: 240,
+                    frameRate: 30
+                }
+            });
+
+            if (!conversion.isValid) {
+                statusMessage.textContent = "Couldn't convert video.";
+                progressMessage.textContent = "Please try another file.";
+                submit.disabled = false;
+
+                throw new Error("Invalid conversion");
+            }
+
+            var lastTimeUpdate = Date.now();
+
+            conversion.onProgress = function(progress) {
+                progressMessage.textContent = `Transcoding... (${Math.round(progress * 100)}%)`;
+
+                if (Date.now() - lastTimeUpdate > 100) {
+                    video.currentTime = progress * video.duration;
+                    lastTimeUpdate = Date.now();
+
+                    video.play();
+                    video.pause();
+                }
+            };
+
+            await conversion.execute();
+
+            return output.target.buffer;
+        } catch (e) {
+            statusMessage.textContent = "Sorry, but local preprocessing failed.";
+            progressMessage.textContent = "Your web browser may be out of date. Please either update your web browser, or upload a video that is maximum 480p to bypass local preprocessing.";
+            submit.disabled = false;
+
+            console.log(status, document.getElementById("status"), statusMessage.textContent);
+
+            throw e;
+        }
+    }
+
+    submitButton.addEventListener("click", function(event) {
+        if (fileInput.files.length == 0) {
+            return;
+        }
+
+        event.preventDefault();
+
+        submitButton.disabled = true;
+        statusMessage.textContent = "Preprocessing video...";
+        progressMessage.textContent = "";
+
+        video = document.createElement("video");
+
+        document.getElementById("video").append(video);
+
+        video.preload = "metadata";
+
+        video.addEventListener("loadedmetadata", async function() {
+            if (video.duration > 5 * 60) {
+                statusMessage.textContent = "Sorry, your video is too long.";
+                progressMessage.textContent = "Please make it shorter and try again.";
+                submit.disabled = false;
+
+                throw new Error("Video too long");
+            }
+
+            if (video.videoWidth > 640 || video.videoHeight > 480) {
+                progressMessage.textContent = "Loading local transcoding tool...";
+
+                var transcoderLibrary = await loadTranscoderLibrary();
+                var videoBuffer = await transcodeVideo(transcoderLibrary);
+
+                statusMessage.textContent = "Uploading video...";
+                progressMessage.textContent = "";
+
+                var formData = new FormData();
+
+                formData.append("file", new Blob([videoBuffer], {type: "video/mp4"}));
+
+                var request = new XMLHttpRequest();
+
+                request.addEventListener("load", function(response) {
+                    window.location.href = request.responseURL;
+                });
+
+                request.open("POST", "/upload");
+                request.send(formData);
+            } else {
+                form.submit();
+            }
+        });
+
+        video.addEventListener("error", function() {
+            statusMessage.textContent = "Failed to load video.";
+            progressMessage.textContent = "Please check the video file and try again.";
+            submit.disabled = false;
+        });
+
+        video.src = URL.createObjectURL(fileInput.files[0]);
+    });
+</script>
 {% endblock %}

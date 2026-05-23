@@ -130,7 +130,7 @@ def sign_in():
                 section="signin",
                 username=request.form["username"],
                 error=str(e)
-            )
+            ), 400
 
     return render_template(
         "auth/signin.html",
@@ -168,7 +168,7 @@ def sign_up():
                 username=request.form["username"],
                 tosAgreed=request.form["tosAgreed"],
                 error=str(e)
-            )
+            ), 400
 
     return render_template(
         "auth/signup.html",
