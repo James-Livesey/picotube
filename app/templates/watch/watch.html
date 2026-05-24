@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block title %}watch :: picotube{% endblock %}
+{% block body_classes %}wide{% endblock %}
+{% block main %}
+<h2>watch</h2>
+<video id="video" controls></video>
+{% endblock %}
+{% block scripts %}
+<script type="module">
+    import {MediaPlayer} from "{{ url_for('static', filename='lib/dash.all.min.js') }}";
+
+    var player = MediaPlayer().create();
+
+    // TODO: Find original variant
+    player.initialize(document.getElementById("video"), "/watch/{{ video_id }}/variants/0gWQLympLOoMgjLF/video.mpd");
+</script>
+{% endblock %}

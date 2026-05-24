@@ -5,6 +5,7 @@ import db
 from privateapi import privateapi
 from auth import auth, get_current_user
 from upload import upload
+from watch import watch
 
 logging.basicConfig(level=logging.INFO)
 
@@ -16,6 +17,7 @@ app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 app.register_blueprint(privateapi)
 app.register_blueprint(auth)
 app.register_blueprint(upload)
+app.register_blueprint(watch)
 
 @app.after_request
 def after_request(response):

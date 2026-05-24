@@ -12,7 +12,7 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
         {% endblock %}
     </head>
-    <body>
+    <body class="{% block body_classes %}{% endblock %}">
         <header>
             {% block header %}
             <h1><a href="/">picotube</a></h1>
@@ -29,6 +29,9 @@
             <ul>
                 {% block nav %}
                 <li><a href="/" class="{{ 'active' if section == 'home' else '' }}">home</a></li>
+                {% if section == 'watch' %}
+                <li><a href="/watch/{{ video_id }}" class="active">watch</a></li>
+                {% endif %}
                 <li><a href="/" class="{{ 'active' if section == 'hot' else '' }}">hot</a></li>
                 <li><a href="/" class="{{ 'active' if section == 'latest' else '' }}">latest</a></li>
                 <li><a href="/" class="{{ 'active' if section == 'random' else '' }}">random</a></li>
