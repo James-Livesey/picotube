@@ -4,6 +4,7 @@ import pathlib
 import time
 import re
 import ffmpeg
+import cv2
 from flask import Blueprint, request, render_template, redirect, abort
 
 import common
@@ -18,13 +19,13 @@ ALLOWED_MIME_TYPES = ["video/mp4", "video/x-matroska", "video/webm", "video/x-ms
 class UploadError(Exception):
     pass
 
-def create_variant(video):
+def create_variant(video, duration):
     variant_id = common.generate_key()
 
     try:
         db.lock.acquire(True)
 
-        db.cursor.execute("INSERT INTO video_variants (variant_id, video) VALUES (?, ?)", [variant_id, video])
+        db.cursor.execute("INSERT INTO video_variants (variant_id, video, duration) VALUES (?, ?, ?)", [variant_id, video, int(duration * 1000)])
 
         db.connection.commit()
     except Exception as e:
@@ -61,13 +62,19 @@ def create_subtitles(video, type, subtitles):
     finally:
         db.lock.release()
 
-def create_video(author, title=None):
+def create_video(author, title, duration):
     video_id = common.generate_key()
 
     try:
         db.lock.acquire(True)
 
-        db.cursor.execute("INSERT INTO videos (video_id, author, title, created_time) VALUES (?, ?, ?, ?)", [video_id, author, title, time.time()])
+        db.cursor.execute("INSERT INTO videos (video_id, author, title, created_time, duration) VALUES (?, ?, ?, ?, ?)", [
+            video_id,
+            author,
+            title,
+            time.time(),
+            int(duration * 1000)
+        ])
 
         db.connection.commit()
     except Exception as e:
@@ -176,11 +183,27 @@ def upload_area():
             if width > 854 or height > 480:
                 raise UploadError("Sorry, but video files must have a maximum resolution of 854×480. Please reduce the video file's resolution and try again.")
 
-            video_id = create_video(user["uid"], os.path.splitext(file.filename)[0])
-            variant_id = create_variant(video_id)
+            video_id = create_video(user["uid"], os.path.splitext(file.filename)[0], duration)
+            variant_id = create_variant(video_id, duration)
 
             if subtitles != "":
                 create_subtitles(video_id, "generated", subtitles)
+
+            try:
+                capture = cv2.VideoCapture(provisional_path)
+
+                capture.set(cv2.CAP_PROP_POS_MSEC, (duration / 5) * 1000)
+
+                success, image = capture.read()
+
+                os.makedirs(pathlib.Path("videos") / video_id, exist_ok=True)
+
+                if success:
+                    cv2.imwrite(pathlib.Path("videos") / video_id / "thumbnail.jpg", image)
+                else:
+                    raise Exception("Read unsuccessful")
+            except Exception as e:
+                logger.warning("Failed to generate thumbnail: %s", e)
 
             os.rename(provisional_path, pathlib.Path("uploads") / (variant_id + ".upload"))
 
@@ -189,7 +212,7 @@ def upload_area():
             try:
                 os.remove(provisional_path)
             except Exception as e:
-                logger.warning(e)
+                logger.warning("Failed to remove provisional video file: %s", e)
 
             return render_template(
                 "upload/upload.html",

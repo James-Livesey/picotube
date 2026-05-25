@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS videos (
     title varchar(100),
     description varchar(2000),
     created_time integer NOT NULL,
+    duration integer NOT NULL,
     has_burnt_in_subtitles boolean DEFAULT FALSE,
     has_flashing_images boolean DEFAULT FALSE,
     allows_comments DEFAULT FALSE,
@@ -33,6 +34,7 @@ CREATE TABLE IF NOT EXISTS video_variants (
     video varchar(16) REFERENCES videos(video_id) NOT NULL,
     type varchar(16) DEFAULT 'original',
     display_name varchar(50),
+    duration integer NOT NULL,
     transcoder_status integer DEFAULT 0
 );
 
