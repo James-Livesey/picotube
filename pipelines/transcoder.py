@@ -2,6 +2,7 @@ import logging
 import subprocess
 import pathlib
 import os
+import ffmpeg
 from pipelines import common
 
 logger = logging.getLogger(name="transcoder")
@@ -25,15 +26,32 @@ def transcode(upload):
     os.makedirs(video_dir, exist_ok=True)
 
     try:
+        upload_path = str(pathlib.Path("uploads") / (variant_id + ".upload"))
+
+        probe = ffmpeg.probe(upload_path)
+        width = None
+        height = None
+
+        for stream in probe["streams"]:
+            if stream["codec_type"] == "video":
+                width = stream["width"]
+                height = stream["height"]
+
+                break
+
+        if width is None or height is None:
+            raise Exception("Could not find a valid video stream")
+
+        new_width = width * 240 // height
+
         subprocess.call([
             "ffmpeg",
-            "-re",
-            "-i", str(pathlib.Path("uploads") / (variant_id + ".upload")),
+            "-i", upload_path,
             "-c:v", "libx264",
             "-crf", "28",
             "-preset", "ultrafast",
             "-threads", "0",
-            "-s", "320x240",
+            "-s", f"{new_width}x240",
             "-f", "dash",
             str(video_dir / "video.mpd")
         ])

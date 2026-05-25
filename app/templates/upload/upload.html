@@ -203,10 +203,24 @@
         video.preload = "metadata";
 
         video.addEventListener("loadedmetadata", async function() {
+            var aspectRatio = video.videoWidth / video.videoHeight;
+
             if (video.duration > 5 * 60) {
                 showError("Sorry, your video is too long.", "Please make it shorter and try again.");
 
                 throw new Error("Video too long");
+            }
+
+            if (aspectRatio > 16 / 9) {
+                showError("Sorry, your video is too wide.", "Please make your video less wide so that it fits in at most a 16:9 aspect ratio and try again.");
+
+                throw new Error("Video too wide");
+            }
+
+            if (aspectRatio < 1) {
+                showError("Sorry, your video is not wide enough.", "Please make your video wider so that it fits in at least a 1:1 aspect ratio and try again.");
+
+                throw new Error("Video not wide enough");
             }
 
             var transcodingPromise = null;

@@ -3,6 +3,7 @@ import os
 import pathlib
 import time
 import re
+import ffmpeg
 from flask import Blueprint, request, render_template, redirect, abort
 
 import common
@@ -132,6 +133,11 @@ def upload_area():
         return redirect("/signin?go=/upload", code=302)
 
     if request.method == "POST":
+        os.makedirs("uploads", exist_ok=True)
+
+        provisional_variant_id = common.generate_key()
+        provisional_path = pathlib.Path("uploads") / (provisional_variant_id + ".upload.temp")
+
         try:
             if "file" not in request.files or request.files["file"].filename == "":
                 raise UploadError("Please actually upload something.")
@@ -142,7 +148,33 @@ def upload_area():
             if file.content_type not in ALLOWED_MIME_TYPES:
                 raise UploadError("Sorry, but that file isn't a supported video format.")
 
-            os.makedirs("uploads", exist_ok=True)
+            file.save(provisional_path)
+
+            probe = ffmpeg.probe(provisional_path)
+
+            width = None
+            height = None
+            duration = None
+
+            for stream in probe["streams"]:
+                if stream["codec_type"] == "video":
+                    width = stream["width"]
+                    height = stream["height"]
+                    duration = float(stream["duration"])
+
+                    break
+
+            if width is None or height is None or duration is None:
+                raise UploadError("Sorry, but this video file doens't actually seem to contain any video data. Please try a different file.")
+
+            if duration > 5 * 60:
+                raise UploadError("Sorry, but this video is too long. Please try uploading a shorter video.")
+
+            if width < 256 or height < 144:
+                raise UploadError("Sorry, but video files must have a minimum resolution of 256×144. Please increase the video file's resolution and try again.")
+
+            if width > 854 or height > 480:
+                raise UploadError("Sorry, but video files must have a maximum resolution of 854×480. Please reduce the video file's resolution and try again.")
 
             video_id = create_video(user["uid"], os.path.splitext(file.filename)[0])
             variant_id = create_variant(video_id)
@@ -150,10 +182,15 @@ def upload_area():
             if subtitles != "":
                 create_subtitles(video_id, "generated", subtitles)
 
-            file.save(pathlib.Path("uploads") / (variant_id + ".upload"))
+            os.rename(provisional_path, pathlib.Path("uploads") / (variant_id + ".upload"))
 
             return redirect("/upload/" + video_id, code=302)
         except UploadError as e:
+            try:
+                os.remove(provisional_path)
+            except Exception as e:
+                logger.warning(e)
+
             return render_template(
                 "upload/upload.html",
                 user=user,
@@ -176,6 +213,19 @@ def upload_details(video_id):
 
     if user is None:
         return redirect("/signin?go=/upload/" + video_id, code=302)
+
+    try:
+        db.lock.acquire(True)
+
+        video = db.cursor.execute("SELECT author, title, description FROM videos WHERE video_id = ?", [video_id]).fetchone()
+    finally:
+        db.lock.release()
+
+    if video is None:
+        return abort(404)
+
+    if user["uid"] != video[0]:
+        return abort(403)
 
     if request.method == "POST":
         title = (request.form.get("title") or "").strip()
@@ -249,26 +299,16 @@ def upload_details(video_id):
                 error=str(e)
             ), 400
 
-    try:
-        db.lock.acquire(True)
-
-        video = db.cursor.execute("SELECT title, description FROM videos WHERE video_id = ?", [video_id]).fetchone()
-
-        if video is None:
-            return abort(404)
-
-        return render_template(
-            "upload/uploaddetails.html",
-            user=user,
-            section="upload",
-            title=video[0] or "",
-            description=video[1] or "",
-            tags="",
-            subtitles="useGenerated",
-            flashing_images="",
-            comments="yes",
-            publish="now",
-            error=""
-        )
-    finally:
-        db.lock.release()
+    return render_template(
+        "upload/uploaddetails.html",
+        user=user,
+        section="upload",
+        title=video[1] or "",
+        description=video[2] or "",
+        tags="",
+        subtitles="useGenerated",
+        flashing_images="",
+        comments="yes",
+        publish="now",
+        error=""
+    )
