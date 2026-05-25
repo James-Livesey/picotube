@@ -1,4 +1,5 @@
 __pycache__
+venv
 app/config.py
 picotube.db
 uploads

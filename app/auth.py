@@ -67,6 +67,8 @@ def create_user(username, email, password, ip_address):
         db.connection.commit()
 
         return uid
+    except AuthError as e:
+        raise e
     except Exception as e:
         logger.error("Cannot create user: %s", repr(e))
 

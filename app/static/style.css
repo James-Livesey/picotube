@@ -18,6 +18,10 @@ body.wide {
     max-width: 1000px;
 }
 
+header, nav, main, footer {
+    margin-inline: 1em;
+}
+
 header {
     display: flex;
     color: var(--accent);

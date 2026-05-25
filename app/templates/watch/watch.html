@@ -2,8 +2,39 @@
 {% block title %}watch :: picotube{% endblock %}
 {% block body_classes %}wide{% endblock %}
 {% block main %}
-<h2>watch</h2>
-<video id="video" controls></video>
+<div class="primary_content">
+    <video id="video" controls></video>
+    <h2 class="title">{{ video["title"] }}</h2>
+</div>
+<aside class="suggested_videos">
+    <p>Pretend that there are a bunch of suggested videos here</p>
+</aside>
+<style>
+    main {
+        display: flex;
+        gap: 2em;
+    }
+
+    video {
+        width: 100%;
+        margin-block-start: 1em;
+    }
+
+    .primary_content {
+        flex-grow: 1;
+        min-width: 0;
+    }
+
+    .suggested_videos {
+        flex-shrink: 0;
+        width: 15em;
+    }
+
+    .title {
+        font-size: 1.25em;
+        word-wrap: break-word;
+    }
+</style>
 {% endblock %}
 {% block scripts %}
 <script type="module">
@@ -11,7 +42,6 @@
 
     var player = MediaPlayer().create();
 
-    // TODO: Find original variant
-    player.initialize(document.getElementById("video"), "/watch/{{ video_id }}/variants/gGWFciQ45eFS1LHz/video.mpd");
+    player.initialize(document.getElementById("video"), "/watch/{{ video_id }}/variants/{{ original_variant['variant_id'] }}/video.mpd");
 </script>
 {% endblock %}

@@ -225,7 +225,7 @@ def upload_details(video_id):
         return abort(404)
 
     if user["uid"] != video[0]:
-        return abort(403)
+        return abort(404)
 
     if request.method == "POST":
         title = (request.form.get("title") or "").strip()
