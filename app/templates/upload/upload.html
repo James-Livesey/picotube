@@ -158,7 +158,7 @@
             createModule,
             model: "{{ url_for('static', filename='lib/ggml-tiny.en-q8_0.bin') }}",
             onReady: () => transcriptionProgressMessage.textContent = "Starting local subtitle generator...",
-            onProgress: (progress) => transcriptionProgressMessage.textContent = `Generating subtitles... (${progress}%)`,
+            onProgress: (progress) => transcriptionProgressMessage.textContent = progress == 0 ? "Generating subtitles..." : `Generating subtitles... (${progress}%)`,
             print: (message) => console.log(message),
             printErr: (message) => console.error(message)
         });
