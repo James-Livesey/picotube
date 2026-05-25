@@ -3,8 +3,13 @@
 {% block body_classes %}wide{% endblock %}
 {% block main %}
 <div class="primary_content">
-    <video id="video" controls></video>
+    <video id="video" controls>
+        {% if generated_subtitles %}
+        <track src="/watch/{{ video_id }}/subtitles/{{ generated_subtitles['subtitles_id'] }}.vtt" kind="captions" label="Auto-generated">
+        {% endif %}
+    </video>
     <h2 class="title">{{ video["title"] }}</h2>
+    <p class="description">{{ video["description"] }}</p>
 </div>
 <aside class="suggested_videos">
     <p>Pretend that there are a bunch of suggested videos here</p>
@@ -32,6 +37,10 @@
 
     .title {
         font-size: 1.25em;
+        word-wrap: break-word;
+    }
+
+    .description {
         word-wrap: break-word;
     }
 </style>

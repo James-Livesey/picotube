@@ -64,6 +64,31 @@ def get_video_variants(video):
     finally:
         db.lock.release()
 
+def get_video_subtitles(video):
+    try:
+        db.lock.acquire(True)
+
+        fields = [
+            "subtitles_id",
+            "type",
+            "display_name"
+        ]
+
+        rows = db.cursor.execute(f"SELECT {', '.join(fields)} FROM video_subtitles WHERE video = ?", [video]).fetchall()
+        variants = []
+
+        for row in rows:
+            variant = {}
+
+            for i in range(0, len(fields)):
+                variant[fields[i]] = row[i]
+
+            variants.append(variant)
+
+        return variants
+    finally:
+        db.lock.release()
+
 @watch.route("/watch/<video_id>")
 def watch_video(video_id):
     user = get_current_user(request)
@@ -84,6 +109,15 @@ def watch_video(video_id):
 
             break
 
+    subtitles_list = get_video_subtitles(video_id)
+    generated_subtitles = None
+
+    for subtitles in subtitles_list:
+        if subtitles["type"] == "generated":
+            generated_subtitles = subtitles
+
+            break
+
     return render_template(
         "watch/watch.html",
         user=get_current_user(request),
@@ -91,7 +125,9 @@ def watch_video(video_id):
         video_id=video_id,
         video=video,
         variants=variants,
-        original_variant=original_variant
+        original_variant=original_variant,
+        subtitles=subtitles_list,
+        generated_subtitles=generated_subtitles
     )
 
 @watch.route("/watch/<video_id>/<path:path>")
