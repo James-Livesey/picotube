@@ -4,6 +4,7 @@ from flask import Blueprint, request, render_template, abort, send_from_director
 
 import db
 from auth import get_current_user
+from recommendations import get_recommendations
 
 watch = Blueprint("watch", __name__)
 logger = logging.getLogger()
@@ -127,7 +128,8 @@ def watch_video(video_id):
         variants=variants,
         original_variant=original_variant,
         subtitles=subtitles_list,
-        generated_subtitles=generated_subtitles
+        generated_subtitles=generated_subtitles,
+        recommendations=get_recommendations(["videos.video_id != ?"], [video_id], limit=4)
     )
 
 @watch.route("/watch/<video_id>/<path:path>")

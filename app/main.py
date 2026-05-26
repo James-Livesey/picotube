@@ -6,6 +6,7 @@ from privateapi import privateapi
 from auth import auth, get_current_user
 from upload import upload
 from watch import watch
+from recommendations import get_recommendations
 
 logging.basicConfig(level=logging.INFO)
 
@@ -31,7 +32,8 @@ def index():
     return render_template(
         "index.html",
         user=get_current_user(request),
-        section="home"
+        section="home",
+        recommendations=get_recommendations(limit=8)
     )
 
 if __name__ == "__main__":

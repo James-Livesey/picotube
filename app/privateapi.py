@@ -50,6 +50,12 @@ def transcoder_variant(variant_id):
         if isinstance(data.get("transcoder_status"), int):
             db.cursor.execute("UPDATE video_variants SET transcoder_status = ? WHERE variant_id = ?", [data.get("transcoder_status"), variant_id])
 
+            if data.get("transcoder_status") == 2:
+                row = db.cursor.execute("SELECT video FROM video_variants WHERE variant_id = ?", [variant_id]).fetchone()
+
+                if row is not None:
+                    db.cursor.execute("UPDATE videos SET processing_done = TRUE WHERE video_id = ?", [row[0]])
+
         db.connection.commit()
 
         return jsonify({}), 200
