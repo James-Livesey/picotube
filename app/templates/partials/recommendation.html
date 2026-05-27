@@ -1,0 +1,15 @@
+<div class="recommendation">
+    <div>
+        <h3 class="title">
+            <a href="/watch/{{ video['video_id'] }}" title="{{ video['title'] }}">
+                <div class="target"></div>
+                <span class="titleText">{{ video["title"] }}</span>
+            </a>
+        </h3>
+        <a class="userLink" href="/users/{{ video['author_display_username'] }}">{{ video["author_display_username"] }}</a>
+    </div>
+    <div class="thumbnail">
+        <img class="thumbnail" src="/watch/{{ video['video_id'] }}/thumbnail.jpg" alt="" aria-hidden="true">
+        <span class="duration" role="text">{{ video["duration_time"] }}</span>
+    </div>
+</div>

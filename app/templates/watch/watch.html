@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% block title %}watch :: picotube{% endblock %}
+{% block title %}{{ video["title"] }} :: picotube{% endblock %}
 {% block body_classes %}wide{% endblock %}
 {% block main %}
 <div class="primary_content">
@@ -12,12 +12,16 @@
     <p class="description">{{ video["description"] }}</p>
 </div>
 <aside class="suggested_videos">
-    <p>Pretend that there are a bunch of suggested videos here</p>
+    <div class="recommendations_list">
+    {% for video in recommendations %}
+    {% include "partials/recommendation.html" %}
+    {% endfor %}
+</div>
 </aside>
 <style>
     main {
         display: flex;
-        gap: 2em;
+        gap: 3em;
     }
 
     video {
@@ -32,7 +36,7 @@
 
     .suggested_videos {
         flex-shrink: 0;
-        width: 15em;
+        width: 12em;
     }
 
     .title {

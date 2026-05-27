@@ -1,5 +1,15 @@
 {% extends "layout.html" %}
 {% block title %}picotube{% endblock %}
 {% block main %}
-<p>Welcome to <strong>picotube</strong>, the world's smallest online video streaming site™.</p>
+<p class="intro">Welcome to <strong>picotube</strong>, the world's smallest online video streaming site™.</p>
+<div class="recommendations_grid">
+    {% for video in recommendations %}
+    {% include "partials/recommendation.html" %}
+    {% endfor %}
+</div>
+<style>
+    .intro {
+        margin-block: 2em;
+    }
+</style>
 {% endblock %}
