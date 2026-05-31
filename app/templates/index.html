@@ -2,7 +2,7 @@
 {% block title %}picotube{% endblock %}
 {% block main %}
 <p class="intro">Welcome to <strong>picotube</strong>, the world's smallest online video streaming site™.</p>
-<div class="recommendations_grid">
+<div class="recommendationsGrid">
     {% for video in recommendations %}
     {% include "partials/recommendation.html" %}
     {% endfor %}

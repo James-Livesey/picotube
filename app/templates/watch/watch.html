@@ -2,7 +2,7 @@
 {% block title %}{{ video["title"] }} :: picotube{% endblock %}
 {% block body_classes %}wide{% endblock %}
 {% block main %}
-<div class="primary_content">
+<div class="primaryContent">
     <video id="video" controls>
         {% if generated_subtitles %}
         <track src="/watch/{{ video_id }}/subtitles/{{ generated_subtitles['subtitles_id'] }}.vtt" kind="captions" label="Auto-generated">
@@ -11,8 +11,8 @@
     <h2 class="title">{{ video["title"] }}</h2>
     <p class="description">{{ video["description"] }}</p>
 </div>
-<aside class="suggested_videos">
-    <div class="recommendations_list">
+<aside class="suggestedVideos">
+    <div class="recommendationsList">
     {% for video in recommendations %}
     {% include "partials/recommendation.html" %}
     {% endfor %}
@@ -29,12 +29,12 @@
         margin-block-start: 1em;
     }
 
-    .primary_content {
+    .primaryContent {
         flex-grow: 1;
         min-width: 0;
     }
 
-    .suggested_videos {
+    .suggestedVideos {
         flex-shrink: 0;
         width: 12em;
     }

@@ -170,14 +170,14 @@ section.highlight {
     text-align: end;
 }
 
-.recommendations_grid {
+.recommendationsGrid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1em;
     margin-block: 1em;
 }
 
-.recommendations_list {
+.recommendationsList {
     display: flex;
     flex-direction: column;
     gap: 1em;
