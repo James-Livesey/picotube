@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% block title %}{{ channel_user["display_username"] }}'s channel :: picotube{% endblock %}
+{% block main %}
+<h2>{{ channel_user["display_username"] }}</h2>
+<div class="recommendationsGrid">
+    {% for video in videos %}
+    {% include "partials/recommendation.html" %}
+    {% endfor %}
+</div>
+{% endblock %}

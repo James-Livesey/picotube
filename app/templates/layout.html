@@ -37,7 +37,7 @@
                 <li><a href="/" class="{{ 'active' if section == 'random' else '' }}">random</a></li>
                 <span class="spacer"></span>
                 {% if user %}
-                <li><a href="/" class="{{ 'active' if section == 'user' else '' }}">profile</a></li>
+                <li><a href="/profile" class="{{ 'active' if section == 'profile' else '' }}">profile</a></li>
                 <li><a href="/upload" class="{{ 'active' if section == 'upload' else '' }}">upload</a></li>
                 {% else %}
                 <li><a href="/signin" class="{{ 'active' if section == 'signin' else '' }}">sign in</a></li>

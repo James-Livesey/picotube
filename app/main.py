@@ -7,6 +7,7 @@ from auth import auth, get_current_user
 from upload import upload
 from watch import watch
 from recommendations import get_recommendations
+from channel import channel
 
 logging.basicConfig(level=logging.INFO)
 
@@ -19,6 +20,7 @@ app.register_blueprint(privateapi)
 app.register_blueprint(auth)
 app.register_blueprint(upload)
 app.register_blueprint(watch)
+app.register_blueprint(channel)
 
 @app.after_request
 def after_request(response):
