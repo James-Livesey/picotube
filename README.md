@@ -18,3 +18,5 @@ python3 app/main.py
 ```bash
 python3 -m pipelines.main
 ```
+
+The picotube interface will then be available at [localhost:8000](http://localhost:8000).
