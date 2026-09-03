@@ -2,7 +2,7 @@
 The world's smallest online video streaming site™
 
 ## Prerequisites
-Before running picotube, first install the required packages:
+Before running picotube, first install the required packages by running:
 
 ```bash
 pip3 install -r requirements.txt
