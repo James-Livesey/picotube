@@ -9,7 +9,7 @@ pip3 install -r requirements.txt
 ```
 
 ## Running picotube
-To run the picotube server and backend, you need to run these two commands concurrently:
+To run the picotube server and backend service, you need to run these two commands concurrently:
 
 ```bash
 python3 app/main.py
